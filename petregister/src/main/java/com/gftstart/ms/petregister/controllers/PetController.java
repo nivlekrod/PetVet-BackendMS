@@ -57,4 +57,16 @@ public class PetController {
             return ResponseEntity.badRequest().body(Collections.emptyList());
         }
     }
+
+    @PutMapping("{id}")
+    public ResponseEntity<PetModel> updatePet(@PathVariable("id") Long id, @RequestBody PetModel pet) {
+        PetModel updatedPet = petService.updatePet(id, pet);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedPet);
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<String> deletePet(@PathVariable("id") Long id) {
+        petService.deletePet(id);
+        return ResponseEntity.status(HttpStatus.OK).body("Successfully Deleted!");
+    }
 }
