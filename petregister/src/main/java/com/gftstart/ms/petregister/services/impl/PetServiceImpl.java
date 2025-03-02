@@ -101,9 +101,10 @@ public class PetServiceImpl implements PetService {
         }
     }
 
+    /// TENTAR FAZER O ENUM IGNORAR CASE
     public List<PetModel> searchPetsBySpecies(Species species) {
         try {
-            List<PetModel> pets = petRepository.findBySpeciesIgnoreCase(species);
+            List<PetModel> pets = petRepository.findBySpeciesIgnoreCase(species.name());
 
             if (pets.isEmpty()) {
                 throw new NoSuchElementException("Lista está vazia, nenhum elemento encontrado.");
@@ -115,10 +116,10 @@ public class PetServiceImpl implements PetService {
         }
     }
 
-    //CORRIGIR
+    /// TENTAR FAZER O ENUM IGNORAR CASE
     public List<PetModel> searchPetsBySpeciesAndBreed(Species species, String breed) {
         try {
-            List<PetModel> pets = petRepository.findBySpeciesAndBreedIgnoreCase(species, breed);
+            List<PetModel> pets = petRepository.findBySpeciesAndBreedIgnoreCase(species.name(), breed);
 
             if (pets.isEmpty()) {
                 throw new NoSuchElementException("Lista está vazia, nenhum elemento encontrado.");

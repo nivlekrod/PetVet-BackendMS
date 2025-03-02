@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +28,7 @@ public class PetController {
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<PetModel> getPetById(@PathVariable("id") Long id) {
+    public ResponseEntity<PetModel> getPetById(@PathVariable("id") UUID id) {
         PetModel pet = petService.getPetById(id);
         return ResponseEntity.status(HttpStatus.OK).body(pet);
     }
@@ -38,9 +39,10 @@ public class PetController {
         return ResponseEntity.status(HttpStatus.OK).body(pets);
     }
 
-    /// CORRIGIR ENUM P FILTRO///
+    /// TENTAR FAZER O ENUM IGNORAR CASE
+    /// corrigir url ?
     @GetMapping("filter")
-    public ResponseEntity<List<PetModel>> searchPetsBySpeciesOrBreed(@RequestParam(value = "species", required = false) String species,
+    public ResponseEntity<List<PetModel>> searchPetsBySpeciesOrBreed(@RequestParam(value = "species", required = false) Species species,
                                                                      @RequestParam(value = "breed", required = false) String breed) {
         List<PetModel> pets;
 
@@ -59,13 +61,13 @@ public class PetController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<PetModel> updatePet(@PathVariable("id") Long id, @RequestBody PetModel pet) {
+    public ResponseEntity<PetModel> updatePet(@PathVariable("id") UUID id, @RequestBody PetModel pet) {
         PetModel updatedPet = petService.updatePet(id, pet);
         return ResponseEntity.status(HttpStatus.OK).body(updatedPet);
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<String> deletePet(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deletePet(@PathVariable("id") UUID id) {
         petService.deletePet(id);
         return ResponseEntity.status(HttpStatus.OK).body("Successfully Deleted!");
     }
