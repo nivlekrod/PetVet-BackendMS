@@ -1,29 +1,36 @@
 package com.gftstart.ms.petregister.services;
 
+import com.gftstart.ms.petregister.enums.Species;
 import com.gftstart.ms.petregister.models.PetModel;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface PetService {
     PetModel createPet(PetModel pet);
 
-    PetModel getPetById(Long id);
+    PetModel getPetById(UUID id);
 
     List<PetModel> getAllPets();
 
     List<PetModel> searchPetsByBreed(String breed);
 
-    List<PetModel> searchPetsBySpecies(String species);
+    List<PetModel> searchPetsBySpecies(Species species);
 
-    List<PetModel> searchPetsBySpeciesAndBreed(String species, String breed);
+    List<PetModel> searchPetsBySpeciesAndBreed(Species species, String breed);
 
-    PetModel updatePet(Long id, PetModel pet);
+    PetModel updatePet(UUID id, PetModel pet);
 
-    void deletePet(Long id);
+    void deletePet(UUID id);
 
     List<String> getAllDogsBreeds();
 
     List<String> getAllCatsBreeds();
 
-    String getBreedImage(String breed);
+//    String getBreedImage(Species species, String breed);
+
+    String getCatImage(String breed);
+
+    String getDogImage(String breed);
+
 }
