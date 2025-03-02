@@ -3,9 +3,12 @@ package com.gftstart.ms.petregister.services.impl;
 import com.gftstart.ms.petregister.dtos.PetApiInfosDTO;
 import com.gftstart.ms.petregister.dtos.PetImagesUrlDTO;
 import com.gftstart.ms.petregister.enums.Species;
+import com.gftstart.ms.petregister.events.PetCreatedEvent;
 import com.gftstart.ms.petregister.models.PetModel;
+import com.gftstart.ms.petregister.producers.PetProducer;
 import com.gftstart.ms.petregister.repositories.PetRepository;
 import com.gftstart.ms.petregister.services.PetService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -29,6 +32,9 @@ public class PetServiceImpl implements PetService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private PetProducer petProducer;
 
     private static final String CAT_API_URL = "https://api.thecatapi.com/v1";
     private static final String DOG_API_URL = "https://api.thedogapi.com/v1";
@@ -56,7 +62,17 @@ public class PetServiceImpl implements PetService {
                 throw new IllegalArgumentException("Espécie não suportada: " + pet.getSpecies());
             }
 
-            return petRepository.save(pet);
+            PetModel petCreated = petRepository.save(pet);
+
+            try {
+                PetCreatedEvent event = new PetCreatedEvent();
+                BeanUtils.copyProperties(pet, event);
+                petProducer.publishPetCreated(event);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            return petRepository.save(petCreated);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
