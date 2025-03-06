@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -15,10 +16,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PetModel implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID petId;
 
     private String name;
@@ -26,12 +28,12 @@ public class PetModel implements Serializable {
     @Enumerated(EnumType.STRING)
     private Species species;
 
-    private String tutor;
-    private String emailTutor;
     private String breed;
     private Integer age;
     private Double weight;
     private String color;
     private String description;
     private String referenceImage;
+    private String tutor;
+    private String emailTutor;
 }

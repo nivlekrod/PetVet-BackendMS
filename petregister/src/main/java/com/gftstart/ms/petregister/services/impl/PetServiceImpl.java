@@ -1,5 +1,6 @@
 package com.gftstart.ms.petregister.services.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.gftstart.ms.petregister.dtos.PetApiInfosDTO;
 import com.gftstart.ms.petregister.dtos.PetImagesUrlDTO;
 import com.gftstart.ms.petregister.enums.Species;
@@ -8,8 +9,7 @@ import com.gftstart.ms.petregister.models.PetModel;
 import com.gftstart.ms.petregister.producers.PetProducer;
 import com.gftstart.ms.petregister.repositories.PetRepository;
 import com.gftstart.ms.petregister.services.PetService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -25,16 +25,12 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PetServiceImpl implements PetService {
 
-    @Autowired
-    private PetRepository petRepository;
-
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private PetProducer petProducer;
+    private final PetRepository petRepository;
+    private final RestTemplate restTemplate;
+    private final PetProducer petProducer;
 
     private static final String CAT_API_URL = "https://api.thecatapi.com/v1";
     private static final String DOG_API_URL = "https://api.thedogapi.com/v1";
@@ -62,20 +58,43 @@ public class PetServiceImpl implements PetService {
                 throw new IllegalArgumentException("Espécie não suportada: " + pet.getSpecies());
             }
 
-            PetModel petCreated = petRepository.save(pet);
+            PetModel createdPet = petRepository.save(pet);
 
-            try {
-                PetCreatedEvent event = new PetCreatedEvent();
-                BeanUtils.copyProperties(pet, event);
-                petProducer.publishPetCreated(event);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            PetCreatedEvent event;
+            event = convertToDTO(createdPet);
+            sendDataPetCreated(event);
+            System.out.println("Enviando evento PetCreatedEvent com ID: " + event.getPetId());
 
-            return petRepository.save(petCreated);
+            return createdPet;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void sendDataPetCreated(PetCreatedEvent event) {
+        try {
+            petProducer.publishPetCreated(event);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public PetCreatedEvent convertToDTO(PetModel pet) {
+        if (pet == null) {
+            throw new IllegalArgumentException("O objeto Pet não pode ser nulo.");
+        }
+
+        PetCreatedEvent event = new PetCreatedEvent();
+        event.setPetId(pet.getPetId());
+        event.setName(pet.getName());
+        event.setSpecies(pet.getSpecies());
+        event.setBreed(pet.getBreed());
+        event.setAge(pet.getAge());
+        event.setWeight(pet.getWeight());
+        event.setTutor(pet.getTutor());
+        event.setEmailTutor(pet.getEmailTutor());
+
+        return event;
     }
 
     @Override
@@ -117,7 +136,8 @@ public class PetServiceImpl implements PetService {
         }
     }
 
-    /// TENTAR FAZER O ENUM IGNORAR CASE
+    @Override
+    // Species não ignora case, preciso dar uma olhada se der tempo
     public List<PetModel> searchPetsBySpecies(Species species) {
         try {
             List<PetModel> pets = petRepository.findBySpeciesIgnoreCase(species.name());
@@ -132,7 +152,8 @@ public class PetServiceImpl implements PetService {
         }
     }
 
-    /// TENTAR FAZER O ENUM IGNORAR CASE
+    @Override
+    // Species não ignora case, preciso dar uma olhada se der tempo
     public List<PetModel> searchPetsBySpeciesAndBreed(Species species, String breed) {
         try {
             List<PetModel> pets = petRepository.findBySpeciesAndBreedIgnoreCase(species.name(), breed);
@@ -199,11 +220,6 @@ public class PetServiceImpl implements PetService {
         return List.of();
     }
 
-//    @Override
-//    public String getBreedImage(Species species, String breed) {
-//        return "";
-//    }
-
     @Override
     public String getCatImage(String breed) {
         String url = CAT_API_URL + "/breeds";
@@ -228,8 +244,7 @@ public class PetServiceImpl implements PetService {
                     .findFirst()
                     .orElse("Imagem da raça não encontrada");
 
-            String imageUrl = CAT_API_URL + "/images/" + imgReferenceId; // link da api externa que
-                                                                         // mostra as urls de imagens referencias
+            String imageUrl = CAT_API_URL + "/images/" + imgReferenceId; // link da api externa que mostra as urls de imagens referencias
 
             ResponseEntity<PetImagesUrlDTO> responseImages = restTemplate.exchange(
                     imageUrl,
@@ -275,8 +290,7 @@ public class PetServiceImpl implements PetService {
                     .findFirst()
                     .orElse("Imagem da raça não encontrada");
 
-            String imageUrl = DOG_API_URL + "/images/" + imgReferenceId; // link da api externa que
-                                                                          // mostra as urls de imagens referencias
+            String imageUrl = DOG_API_URL + "/images/" + imgReferenceId; // link da api externa que mostra as urls de imagens referencias
 
             ResponseEntity<PetImagesUrlDTO> responseImages = restTemplate.exchange(
                     imageUrl,

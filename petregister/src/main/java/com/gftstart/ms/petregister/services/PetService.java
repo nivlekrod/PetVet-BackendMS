@@ -7,30 +7,20 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PetService {
+
     PetModel createPet(PetModel pet);
-
     PetModel getPetById(UUID id);
-
     List<PetModel> getAllPets();
-
-    List<PetModel> searchPetsByBreed(String breed);
-
-    List<PetModel> searchPetsBySpecies(Species species);
-
-    List<PetModel> searchPetsBySpeciesAndBreed(Species species, String breed);
-
     PetModel updatePet(UUID id, PetModel pet);
-
     void deletePet(UUID id);
 
+    List<PetModel> searchPetsByBreed(String breed);
+    List<PetModel> searchPetsBySpecies(Species species);
+    List<PetModel> searchPetsBySpeciesAndBreed(Species species, String breed);
+
     List<String> getAllDogsBreeds();
-
     List<String> getAllCatsBreeds();
-
-//    String getBreedImage(Species species, String breed);
-
     String getCatImage(String breed);
-
     String getDogImage(String breed);
 
 }
