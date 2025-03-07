@@ -15,6 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Builder
 public class AppointmentSchedulingModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

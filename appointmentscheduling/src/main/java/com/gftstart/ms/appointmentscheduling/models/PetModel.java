@@ -1,9 +1,11 @@
 package com.gftstart.ms.appointmentscheduling.models;
 
 import com.gftstart.ms.appointmentscheduling.dtos.PetCreatedEventDTO;
+import com.gftstart.ms.appointmentscheduling.dtos.PetDataDTO;
 import com.gftstart.ms.appointmentscheduling.enums.Species;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -18,6 +20,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PetModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
