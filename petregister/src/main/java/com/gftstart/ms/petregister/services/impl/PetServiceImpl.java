@@ -1,6 +1,5 @@
 package com.gftstart.ms.petregister.services.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.gftstart.ms.petregister.dtos.PetApiInfosDTO;
 import com.gftstart.ms.petregister.dtos.PetImagesUrlDTO;
 import com.gftstart.ms.petregister.enums.Species;
@@ -60,10 +59,7 @@ public class PetServiceImpl implements PetService {
 
             PetModel createdPet = petRepository.save(pet);
 
-            PetCreatedEvent event;
-            event = convertToDTO(createdPet);
-            sendDataPetCreated(event);
-            System.out.println("Enviando evento PetCreatedEvent com ID: " + event.getPetId());
+            sendDataPetCreated(createdPet); // petProducer.publishPetCreated(createdPet);
 
             return createdPet;
         } catch (Exception e) {
@@ -71,12 +67,8 @@ public class PetServiceImpl implements PetService {
         }
     }
 
-    public void sendDataPetCreated(PetCreatedEvent event) {
-        try {
-            petProducer.publishPetCreated(event);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+    public void sendDataPetCreated(PetModel petModel) {
+        petProducer.publishPetCreated(petModel);
     }
 
     public PetCreatedEvent convertToDTO(PetModel pet) {
