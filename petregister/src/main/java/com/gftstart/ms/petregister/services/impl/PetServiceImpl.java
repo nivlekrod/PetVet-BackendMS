@@ -3,7 +3,9 @@ package com.gftstart.ms.petregister.services.impl;
 import com.gftstart.ms.petregister.dtos.PetApiInfosDTO;
 import com.gftstart.ms.petregister.dtos.PetImagesUrlDTO;
 import com.gftstart.ms.petregister.enums.Species;
-import com.gftstart.ms.petregister.events.PetCreatedEvent;
+import com.gftstart.ms.petregister.exceptions.PetBadRequestException;
+import com.gftstart.ms.petregister.exceptions.PetDataAccessException;
+import com.gftstart.ms.petregister.exceptions.PetNotFoundException;
 import com.gftstart.ms.petregister.models.PetModel;
 import com.gftstart.ms.petregister.producers.PetProducer;
 import com.gftstart.ms.petregister.repositories.PetRepository;
@@ -11,16 +13,18 @@ import com.gftstart.ms.petregister.services.PetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -62,8 +66,10 @@ public class PetServiceImpl implements PetService {
             sendDataPetCreated(createdPet); // petProducer.publishPetCreated(createdPet);
 
             return createdPet;
+        } catch (DataAccessException e) {
+            throw new PetDataAccessException("Erro ao salvar no banco de dados: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new PetBadRequestException("Erro ao criar gato: " + e.getMessage());
         }
     }
 
@@ -71,30 +77,12 @@ public class PetServiceImpl implements PetService {
         petProducer.publishPetCreated(petModel);
     }
 
-    public PetCreatedEvent convertToDTO(PetModel pet) {
-        if (pet == null) {
-            throw new IllegalArgumentException("O objeto Pet não pode ser nulo.");
-        }
-
-        PetCreatedEvent event = new PetCreatedEvent();
-        event.setPetId(pet.getPetId());
-        event.setName(pet.getName());
-        event.setSpecies(pet.getSpecies());
-        event.setBreed(pet.getBreed());
-        event.setAge(pet.getAge());
-        event.setWeight(pet.getWeight());
-        event.setTutor(pet.getTutor());
-        event.setEmailTutor(pet.getEmailTutor());
-
-        return event;
-    }
-
     @Override
     public PetModel getPetById(UUID id) {
         try {
-            return petRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Pet não foi encontrado"));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            return petRepository.findById(id).orElseThrow(() -> new PetNotFoundException("Pet não foi encontrado"));
+        } catch (DataAccessException e) {
+            throw new PetDataAccessException("Erro ao acessar o banco de dados: " + e.getMessage(), e);
         }
     }
 
@@ -104,12 +92,12 @@ public class PetServiceImpl implements PetService {
             List<PetModel> pets = petRepository.findAll();
 
             if (pets.isEmpty()) {
-                throw new NoSuchElementException("Lista está vazia, nenhum elemento encontrado.");
+                throw new PetNotFoundException("Nenhum pet foi encontrado.");
             }
 
             return pets;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (DataAccessException e) {
+            throw new PetDataAccessException("Erro ao acessar o banco de dados" + e.getMessage(), e);
         }
     }
 
@@ -119,12 +107,12 @@ public class PetServiceImpl implements PetService {
             List<PetModel> pets = petRepository.findByBreedIgnoreCase(breed);
 
             if (pets.isEmpty()) {
-                throw new NoSuchElementException("Lista está vazia, nenhum elemento encontrado.");
+                throw new PetNotFoundException("Lista está vazia, nenhum pet foi encontrado.");
             }
 
             return pets;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (DataAccessException e) {
+            throw new PetDataAccessException("Erro ao acessar o banco de dados" + e.getMessage(), e);
         }
     }
 
@@ -135,12 +123,12 @@ public class PetServiceImpl implements PetService {
             List<PetModel> pets = petRepository.findBySpeciesIgnoreCase(species.name());
 
             if (pets.isEmpty()) {
-                throw new NoSuchElementException("Lista está vazia, nenhum elemento encontrado.");
+                throw new PetNotFoundException("Lista está vazia, nenhum pet foi encontrado.");
             }
 
             return pets;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (DataAccessException e) {
+            throw new PetDataAccessException("Erro ao acessar o banco de dados" + e.getMessage(), e);
         }
     }
 
@@ -151,12 +139,12 @@ public class PetServiceImpl implements PetService {
             List<PetModel> pets = petRepository.findBySpeciesAndBreedIgnoreCase(species.name(), breed);
 
             if (pets.isEmpty()) {
-                throw new NoSuchElementException("Lista está vazia, nenhum elemento encontrado.");
+                throw new PetNotFoundException("Lista está vazia, nenhum pet foi encontrado.");
             }
 
             return pets;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (DataAccessException e) {
+            throw new PetDataAccessException("Erro ao acessar o banco de dados" + e.getMessage(), e);
         }
     }
 
@@ -165,7 +153,7 @@ public class PetServiceImpl implements PetService {
     public PetModel updatePet(UUID id, PetModel pet) {
         try {
             if (!petRepository.existsById(id)) {
-                throw new NoSuchElementException("Nenhum elemento encontrado.");
+                throw new PetNotFoundException("Nenhum pet foi encontrado.");
             }
 
             pet.setPetId(id);
@@ -184,7 +172,8 @@ public class PetServiceImpl implements PetService {
 
             return petRepository.save(pet);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new PetDataAccessException("Erro ao acessar o banco de dados" + e.getMessage(), e);
+
         }
     }
 
@@ -193,12 +182,12 @@ public class PetServiceImpl implements PetService {
     public void deletePet(UUID id) {
         try {
             if (!petRepository.existsById(id)) {
-                throw new NoSuchElementException("Nenhum elemento encontrado.");
+                throw new PetNotFoundException("Nenhum pet foi encontrado.");
             }
 
             petRepository.deleteById(id);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new PetDataAccessException("Erro ao acessar o banco de dados" + e.getMessage(), e);
         }
     }
 
@@ -252,9 +241,12 @@ public class PetServiceImpl implements PetService {
             }
 
             return imgsReference.getUrl();
-
+        } catch (HttpClientErrorException e) {
+            throw new PetBadRequestException("Erro ao buscar raças: " + e.getMessage());
+        } catch (ResourceAccessException e) {
+            throw new PetDataAccessException("Erro de conexão com API externa: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erro inesperado: " + e.getMessage(), e);
         }
     }
 
@@ -299,8 +291,12 @@ public class PetServiceImpl implements PetService {
 
             return imgsReference.getUrl();
 
+        } catch (HttpClientErrorException e) {
+            throw new PetBadRequestException("Erro ao buscar raças: " + e.getMessage());
+        } catch (ResourceAccessException e) {
+            throw new PetDataAccessException("Erro de conexão com API externa: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erro inesperado: " + e.getMessage(), e);
         }
     }
 }
