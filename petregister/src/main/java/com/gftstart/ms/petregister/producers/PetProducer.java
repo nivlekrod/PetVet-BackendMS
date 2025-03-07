@@ -1,8 +1,7 @@
 package com.gftstart.ms.petregister.producers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gftstart.ms.petregister.events.PetCreatedEvent;
+import com.gftstart.ms.petregister.models.PetModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -16,17 +15,21 @@ public class PetProducer {
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${mq.queues.pet_created}")
-    private final Queue petCreatedQueue;
+    private String routingKey;
 
-    public void publishPetCreated(PetCreatedEvent event) throws JsonProcessingException {
-        var json = convertIntoJson(event);
-        System.out.println("Enviando mensagem para a fila: " + petCreatedQueue.getName() + " | Conteúdo: " + json);
-        rabbitTemplate.convertAndSend(petCreatedQueue.getName(), json);
-    }
+    public void publishPetCreated(PetModel petModel) {
+        PetCreatedEvent event = new PetCreatedEvent(
+                petModel.getPetId(),
+                petModel.getName(),
+                petModel.getSpecies(),
+                petModel.getBreed(),
+                petModel.getAge(),
+                petModel.getWeight(),
+                petModel.getTutor(),
+                petModel.getEmailTutor()
+        );
 
-    private String convertIntoJson(PetCreatedEvent event) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        var json = mapper.writeValueAsString(event);
-        return json;
+        System.out.println("Enviando mensagem para a fila: " + routingKey + " | Conteúdo: " + event);
+        rabbitTemplate.convertAndSend("", routingKey, event);
     }
 }
