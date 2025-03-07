@@ -3,7 +3,6 @@ package com.gftstart.ms.petregister.producers;
 import com.gftstart.ms.petregister.events.PetCreatedEvent;
 import com.gftstart.ms.petregister.models.PetModel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
