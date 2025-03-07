@@ -1,16 +1,17 @@
 package com.gftstart.ms.appointmentscheduling.consumers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gftstart.ms.appointmentscheduling.dtos.PetDataDTO;
+import com.gftstart.ms.appointmentscheduling.dtos.PetCreatedEventDTO;
 import com.gftstart.ms.appointmentscheduling.models.PetModel;
 import com.gftstart.ms.appointmentscheduling.repositories.PetModelRepository;
 import com.gftstart.ms.appointmentscheduling.services.AppointmentSchedulingService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,29 +22,43 @@ public class AppointmentSchedulingConsumer {
     private final ObjectMapper objectMapper = new ObjectMapper(); // Evita criar um novo ObjectMapper em cada chamada
 
     @RabbitListener(queues = "${mq.queues.pet_created}")
-    @Transactional
-    public void receivePetCreated(@Payload String payload) {
-        try {
-            System.out.println("Mensagem recebida do RabbitMQ: " + payload);
+    public void receivePetCreated(@Payload PetCreatedEventDTO petCreatedEventDTO) {
+        System.out.println("Mensagem recebida do RabbitMQ: " + petCreatedEventDTO);
 
-            PetDataDTO petDataDTO = objectMapper.readValue(payload, PetDataDTO.class);
+        Optional<PetModel> optionalPet = petRepository.findById(petCreatedEventDTO.getPetId());
 
-            PetModel pet;
-            pet = appointmentService.convertDTO2Entity(petDataDTO);
-            System.out.println(pet);
-            petRepository.save(pet);
-            appointmentService.generatePetAppointments(pet);
-            System.out.println("Agendamentos gerados com sucesso para o pet: " + pet.getName());
+        PetModel petModel;
 
-        } catch (IllegalArgumentException e) {
-            System.err.println("Erro ao processar mensagem: " + e.getMessage());
-            throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
-
-        } catch (Exception e) {
-            System.err.println("Erro inesperado: " + e.getMessage());
-            e.printStackTrace();
-            throw new AmqpRejectAndDontRequeueException("Erro ao processar a mensagem.", e);
+        if (optionalPet.isPresent()) {
+            // Se o Pet já existir, apenas atualize os dados necessários
+            petModel = optionalPet.get();
+            petModel.setName(petCreatedEventDTO.getName());
+            petModel.setSpecies(petCreatedEventDTO.getSpecies());
+            petModel.setBreed(petCreatedEventDTO.getBreed());
+            petModel.setAge(petCreatedEventDTO.getAge());
+            petModel.setWeight(petCreatedEventDTO.getWeight());
+            petModel.setTutor(petCreatedEventDTO.getTutor());
+            petModel.setEmailTutor(petCreatedEventDTO.getEmailTutor());
+            System.out.println("Pet atualizado: " + petModel);
+        } else {
+            // Se o Pet não existir, crie uma nova entidade
+            petModel = new PetModel(
+                    petCreatedEventDTO.getPetId(),
+                    petCreatedEventDTO.getName(),
+                    petCreatedEventDTO.getSpecies(),
+                    petCreatedEventDTO.getBreed(),
+                    petCreatedEventDTO.getAge(),
+                    petCreatedEventDTO.getWeight(),
+                    petCreatedEventDTO.getTutor(),
+                    petCreatedEventDTO.getEmailTutor()
+            );
+            System.out.println("Pet criado: " + petModel);
         }
+
+        petRepository.save(petModel);
+
+        appointmentService.generatePetAppointments(petModel);
+        System.out.println("Agendamentos gerados com sucesso para o pet: " + petModel.getName());
     }
 
 }

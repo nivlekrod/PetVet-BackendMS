@@ -1,10 +1,12 @@
 package com.gftstart.ms.appointmentscheduling.models;
 
+import com.gftstart.ms.appointmentscheduling.dtos.PetCreatedEventDTO;
 import com.gftstart.ms.appointmentscheduling.enums.Species;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.BeanUtils;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -13,15 +15,15 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "TB_PETDATA")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PetModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
     @Column(columnDefinition = "BINARY(16)")
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID petId;
 
     private String name;
@@ -34,4 +36,8 @@ public class PetModel implements Serializable {
     private Double weight;
     private String tutor;
     private String emailTutor;
+
+    public PetModel(PetCreatedEventDTO petCreatedEventDTO) {
+        BeanUtils.copyProperties(petCreatedEventDTO, this);
+    }
 }
