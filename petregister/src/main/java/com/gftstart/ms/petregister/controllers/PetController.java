@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/pets")
+@RequestMapping("/api/pets")
 public class PetController {
 
     private final PetService petService;
@@ -25,7 +25,7 @@ public class PetController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPet);
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<PetModel> getPetById(@PathVariable("id") UUID id) {
         PetModel pet = petService.getPetById(id);
         return ResponseEntity.status(HttpStatus.OK).body(pet);
@@ -37,9 +37,8 @@ public class PetController {
         return ResponseEntity.status(HttpStatus.OK).body(pets);
     }
 
-    /// TENTAR FAZER O ENUM IGNORAR CASE
-    /// corrigir url ?
-    @GetMapping("filter")
+    // Tentar fazer enum ignorar o case e corrigir url?
+    @GetMapping("/filter")
     public ResponseEntity<List<PetModel>> searchPetsBySpeciesOrBreed(@RequestParam(value = "species", required = false) Species species,
                                                                      @RequestParam(value = "breed", required = false) String breed) {
         List<PetModel> pets;
@@ -58,13 +57,13 @@ public class PetController {
         }
     }
 
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<PetModel> updatePet(@PathVariable("id") UUID id, @RequestBody PetModel pet) {
         PetModel updatedPet = petService.updatePet(id, pet);
         return ResponseEntity.status(HttpStatus.OK).body(updatedPet);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deletePet(@PathVariable("id") UUID id) {
         petService.deletePet(id);
         return ResponseEntity.status(HttpStatus.OK).body("Successfully Deleted!");
