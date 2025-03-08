@@ -1,5 +1,6 @@
 package com.gftstart.ms.appointmentscheduling.clients;
 
+import com.gftstart.ms.appointmentscheduling.dtos.PetDataDTO;
 import com.gftstart.ms.appointmentscheduling.models.PetModel;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -12,5 +13,5 @@ import java.util.UUID;
 public interface PetRegisterResourceClient {
 
     @GetMapping("/{id}")
-    ResponseEntity<PetModel> getPetById(@PathVariable("id") UUID id);
+    ResponseEntity<PetDataDTO> getPetById(@PathVariable("id") UUID id);
 }
