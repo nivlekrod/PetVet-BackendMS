@@ -148,4 +148,8 @@ public class AppointmentSchedulingServiceImpl implements AppointmentSchedulingSe
             throw new RuntimeException(e);
         }
     }
+
+    public List<AppointmentSchedulingModel> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
 }

@@ -20,6 +20,7 @@ public interface AppointmentSchedulingService {
     // Agendamento Manual
     AppointmentSchedulingModel createManualAppointment(UUID petId, ServiceType serviceType, LocalDate appointmentDate, String notes);
 
+    List<AppointmentSchedulingModel> getAllAppointments();
     List<AppointmentSchedulingModel> getAppointmentsByPetId(UUID petId);
     AppointmentSchedulingModel updateAppointment(UUID id, AppointmentSchedulingDTO request);
     void deleteAppointment(UUID id);

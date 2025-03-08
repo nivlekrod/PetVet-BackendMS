@@ -45,6 +45,11 @@ public class AppoimentSchedulingController {
     public ResponseEntity<String> deleteAppointment(@PathVariable UUID id) {
         appointmentService.deleteAppointment(id);
         return ResponseEntity.status(HttpStatus.OK).body("Successfully Deleted!");
+    }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<AppointmentSchedulingModel>> getAllAppointments() {
+        List<AppointmentSchedulingModel> appointments = appointmentService.getAllAppointments();
+        return ResponseEntity.ok(appointments);
     }
 }
