@@ -3,6 +3,7 @@ package com.gftstart.ms.petregister.services.impl;
 import com.gftstart.ms.petregister.dtos.PetApiInfosDTO;
 import com.gftstart.ms.petregister.dtos.PetImagesUrlDTO;
 import com.gftstart.ms.petregister.enums.Species;
+import com.gftstart.ms.petregister.exceptions.ErrorComunicaoApiExternaException;
 import com.gftstart.ms.petregister.exceptions.PetBadRequestException;
 import com.gftstart.ms.petregister.exceptions.PetDataAccessException;
 import com.gftstart.ms.petregister.exceptions.PetNotFoundException;
@@ -244,7 +245,7 @@ public class PetServiceImpl implements PetService {
         } catch (HttpClientErrorException e) {
             throw new PetBadRequestException("Erro ao buscar raças: " + e.getMessage());
         } catch (ResourceAccessException e) {
-            throw new PetDataAccessException("Erro de conexão com API externa: " + e.getMessage(), e);
+            throw new ErrorComunicaoApiExternaException("Erro de conexão com API externa: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Erro inesperado: " + e.getMessage(), e);
         }
@@ -294,7 +295,7 @@ public class PetServiceImpl implements PetService {
         } catch (HttpClientErrorException e) {
             throw new PetBadRequestException("Erro ao buscar raças: " + e.getMessage());
         } catch (ResourceAccessException e) {
-            throw new PetDataAccessException("Erro de conexão com API externa: " + e.getMessage(), e);
+            throw new ErrorComunicaoApiExternaException("Erro de conexão com API externa: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Erro inesperado: " + e.getMessage(), e);
         }
