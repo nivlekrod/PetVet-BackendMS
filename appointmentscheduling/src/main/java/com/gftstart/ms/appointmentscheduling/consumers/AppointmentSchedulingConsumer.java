@@ -1,7 +1,5 @@
 package com.gftstart.ms.appointmentscheduling.consumers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gftstart.ms.appointmentscheduling.dtos.PetCreatedEventDTO;
 import com.gftstart.ms.appointmentscheduling.models.PetModel;
 import com.gftstart.ms.appointmentscheduling.repositories.PetModelRepository;
@@ -19,7 +17,6 @@ public class AppointmentSchedulingConsumer {
 
     private final PetModelRepository petRepository;
     private final AppointmentSchedulingService appointmentService;
-    private final ObjectMapper objectMapper = new ObjectMapper(); // Evita criar um novo ObjectMapper em cada chamada
 
     @RabbitListener(queues = "${mq.queues.pet_created}")
     public void receivePetCreated(@Payload PetCreatedEventDTO petCreatedEventDTO) {
@@ -29,6 +26,7 @@ public class AppointmentSchedulingConsumer {
 
         PetModel petModel;
 
+        // UTILIZAR BUILDER?
         if (optionalPet.isPresent()) {
             // Se o Pet já existir, apenas atualize os dados necessários
             petModel = optionalPet.get();
