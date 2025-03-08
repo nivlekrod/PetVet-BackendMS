@@ -14,7 +14,6 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 @Builder
 public class AppointmentSchedulingModel implements Serializable {
     @Serial

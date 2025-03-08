@@ -2,12 +2,10 @@ package com.gftstart.ms.appointmentscheduling.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gftstart.ms.appointmentscheduling.enums.Species;
-import com.gftstart.ms.appointmentscheduling.models.PetModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.BeanUtils;
 
 import java.io.Serial;
 import java.io.Serializable;
