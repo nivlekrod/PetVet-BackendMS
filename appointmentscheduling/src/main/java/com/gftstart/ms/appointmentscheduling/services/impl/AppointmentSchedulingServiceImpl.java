@@ -4,12 +4,19 @@ import com.gftstart.ms.appointmentscheduling.clients.PetRegisterResourceClient;
 import com.gftstart.ms.appointmentscheduling.dtos.AppointmentSchedulingDTO;
 import com.gftstart.ms.appointmentscheduling.dtos.PetDataDTO;
 import com.gftstart.ms.appointmentscheduling.enums.ServiceType;
+import com.gftstart.ms.appointmentscheduling.exceptions.AppointmentBadRequestException;
+import com.gftstart.ms.appointmentscheduling.exceptions.AppointmentDataAccessException;
+import com.gftstart.ms.appointmentscheduling.exceptions.ErrorComunicacaoMicroservicesException;
+import com.gftstart.ms.appointmentscheduling.exceptions.NotFoundException;
 import com.gftstart.ms.appointmentscheduling.models.AppointmentSchedulingModel;
 import com.gftstart.ms.appointmentscheduling.models.PetModel;
 import com.gftstart.ms.appointmentscheduling.repositories.AppointmentSchedulingRepository;
 import com.gftstart.ms.appointmentscheduling.repositories.PetModelRepository;
 import com.gftstart.ms.appointmentscheduling.services.AppointmentSchedulingService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -59,38 +66,48 @@ public class AppointmentSchedulingServiceImpl implements AppointmentSchedulingSe
 
     // Gera os agendamentos automáticos para o pet com base na lógica fornecida
     public void generatePetAppointments(PetModel pet) {
-        List<AppointmentSchedulingModel> appointments = new ArrayList<>();
+        try {
+            List<AppointmentSchedulingModel> appointments = new ArrayList<>();
 
-        boolean isFirstAppointment = !appointmentRepository.existsByPetModel_PetId(pet.getPetId());
+            boolean isFirstAppointment = !appointmentRepository.existsByPetModel_PetId(pet.getPetId());
 
-        // Lógica para vacinação com base na idade
-        if (pet.getAge() < 6) {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.INITIAL_VACCINATION, "Initial Vaccination"));
-        } else {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.VACCINATION, "Regular Vaccination"));
+            // Lógica para vacinação com base na idade
+            if (pet.getAge() < 6) {
+                appointments.add(createAutomaticAppointment(pet, ServiceType.INITIAL_VACCINATION, "Initial Vaccination"));
+            } else {
+                appointments.add(createAutomaticAppointment(pet, ServiceType.VACCINATION, "Regular Vaccination"));
+            }
+
+            // Lógica para consultas veterinárias
+            if (pet.getAge() >= 6) {
+                appointments.add(createAutomaticAppointment(pet, ServiceType.INITIAL_CHECKUP, "Initial Health Check-up"));
+            } else {
+                appointments.add(createAutomaticAppointment(pet, ServiceType.VETERINARY_CONSULTATION, "Routine Veterinary Consultation"));
+            }
+
+            // Agendamento de banho grátis para o primeiro agendamento
+            if (isFirstAppointment) {
+                appointments.add(createAutomaticAppointment(pet, ServiceType.FIRST_FREE_BATH, "Free Bath"));
+            }
+
+            appointmentRepository.saveAll(appointments);
+
+            System.out.println("Agendamentos gerados para o pet: " + appointments);
+        } catch (DataAccessException e) {
+            throw new AppointmentDataAccessException("Erro ao acessar o banco de dados ao gerar agendamentos para o pet" + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new AppointmentBadRequestException("Erro ao gerar agendamentos para o pet" + e.getMessage());
         }
-
-        // Lógica para consultas veterinárias
-        if (pet.getAge() >= 6) {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.INITIAL_CHECKUP, "Initial Health Check-up"));
-        } else {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.VETERINARY_CONSULTATION, "Routine Veterinary Consultation"));
-        }
-
-        // Agendamento de banho grátis para o primeiro agendamento
-        if (isFirstAppointment) {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.FIRST_FREE_BATH, "Free Bath"));
-        }
-
-        appointmentRepository.saveAll(appointments);
-
-        System.out.println("Agendamentos gerados para o pet: " + appointments);
     }
 
     public AppointmentSchedulingModel createManualAppointment(UUID petId, ServiceType serviceType, LocalDate appointmentDate, String notes) {
-        ResponseEntity<PetDataDTO> petData = petRegisterResourceClient.getPetById(petId);
+        try {
+            ResponseEntity<PetDataDTO> petData = petRegisterResourceClient.getPetById(petId);
 
-        if (petData != null) {
+            if (petData == null || petData.getBody() == null) {
+                throw new NotFoundException("Dados do pet não encontrados");
+            }
+
             // Mapeando os dados do pet para o modelo PetModel
             PetModel petModel = PetModel.builder()
                     .petId(petData.getBody().getPetId())
@@ -112,44 +129,69 @@ public class AppointmentSchedulingServiceImpl implements AppointmentSchedulingSe
                     .build();
 
             return appointmentRepository.save(appointment);
-        } else {
-            throw new RuntimeException("Não foi possível obter os dados do pet.");
+        } catch (FeignException.FeignClientException e) {
+            int status = e.status();
+            if (HttpStatus.NOT_FOUND.value() == status) {
+                throw new NotFoundException("Dados do Pet não encontrado para o ID informado");
+            }
+            throw new ErrorComunicacaoMicroservicesException(e.getMessage(), status);
+        } catch (DataAccessException e) {
+            throw new AppointmentDataAccessException("Erro ao acessar o banco de dados ao criar agendamento manual", e);
+        } catch (Exception e) {
+            throw new AppointmentBadRequestException("Erro genérico ao criar agendamento manual" + e.getMessage());
         }
     }
 
     public List<AppointmentSchedulingModel> getAppointmentsByPetId(UUID petId) {
-        return appointmentRepository.findAllByPetModel_PetId(petId);
+        try {
+            return appointmentRepository.findAllByPetModel_PetId(petId);
+        } catch (Exception e) {
+            throw new AppointmentDataAccessException("Erro ao buscar agendamentos pelo ID do pet: " + e.getMessage(), e);
+        }
     }
 
     public AppointmentSchedulingModel updateAppointment(UUID id, AppointmentSchedulingDTO request) {
-        Optional<AppointmentSchedulingModel> optionalAppointment = appointmentRepository.findById(id);
+        try {
+            Optional<AppointmentSchedulingModel> optionalAppointment = appointmentRepository.findById(id);
 
-        if (optionalAppointment.isPresent()) {
+            if (optionalAppointment.isEmpty()) {
+                throw new NotFoundException("Agendamento não encontrado.");
+            }
+
             AppointmentSchedulingModel appointment = optionalAppointment.get();
             appointment.setServiceType(request.getServiceType());
             appointment.setAppointmentDate(request.getAppointmentDate());
             appointment.setNotes(request.getNotes());
 
             return appointmentRepository.save(appointment);
-        } else {
-            throw new RuntimeException("Agendamento não encontrado.");
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (DataAccessException e) {
+            throw new AppointmentDataAccessException("Erro ao acessar o banco de dados ao atualizar agendamento" + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new AppointmentBadRequestException("Erro genérico ao atualizar agendamento" + e.getMessage());
         }
     }
 
     public void deleteAppointment(UUID id) {
         try {
             if (!appointmentRepository.existsById(id)) {
-                throw new NoSuchElementException("Agendamento não encontrado.");
+                throw new NotFoundException("Agendamento não encontrado.");
             }
 
             appointmentRepository.deleteById(id);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            throw new AppointmentBadRequestException("ID de agendamento inválido: " + id);
+        } catch (DataAccessException e) {
+            throw new AppointmentDataAccessException("Erro ao acessar o banco de dados ao deletar agendamento", e);
         }
     }
 
     public List<AppointmentSchedulingModel> getAllAppointments() {
-        return appointmentRepository.findAll();
+        try {
+            return appointmentRepository.findAll();
+        } catch (DataAccessException e) {
+            throw new AppointmentDataAccessException("Erro ao acessar o banco de dados ao buscar todos os agendamentos", e);
+        }
     }
 }
