@@ -1,84 +1,27 @@
 package com.gftstart.ms.appointmentscheduling.services;
 
+import com.gftstart.ms.appointmentscheduling.dtos.AppointmentSchedulingDTO;
 import com.gftstart.ms.appointmentscheduling.enums.ServiceType;
 import com.gftstart.ms.appointmentscheduling.models.AppointmentSchedulingModel;
 import com.gftstart.ms.appointmentscheduling.models.PetModel;
-import com.gftstart.ms.appointmentscheduling.repositories.AppointmentSchedulingRepository;
-import com.gftstart.ms.appointmentscheduling.repositories.PetModelRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
-public class AppointmentSchedulingService {
+public interface AppointmentSchedulingService {
 
-    private final AppointmentSchedulingRepository appointmentRepository;
-    private final PetModelRepository petRepository;
+    // Agendamento Automatico
+    LocalDate generateRandomAppointmentDate(int minDaysAhead, int maxDaysAhead);
+    LocalDate calculateRandomDateForService(ServiceType serviceType);
+    AppointmentSchedulingModel createAutomaticAppointment(PetModel pet, ServiceType serviceType, String notes);
+    void generatePetAppointments(PetModel pet);
 
-    // Gera uma data aleatória dentro do intervalo especificado
-    public LocalDate generateRandomAppointmentDate(int minDaysAhead, int maxDaysAhead) {
-        Random random = new Random();
-        int randomDays = random.nextInt(maxDaysAhead - minDaysAhead + 1) + minDaysAhead;
-        return LocalDate.now().plusDays(randomDays);
-    }
+    // Agendamento Manual
+    AppointmentSchedulingModel createManualAppointment(UUID petId, ServiceType serviceType, LocalDate appointmentDate, String notes);
 
-    // Calcula a data de acordo com o tipo de serviço
-    public LocalDate calculateRandomDateForService(ServiceType serviceType) {
-        return switch (serviceType) {
-            case FIRST_FREE_BATH -> generateRandomAppointmentDate(1, 7);
-            case INITIAL_VACCINATION -> generateRandomAppointmentDate(5, 15);
-            case INITIAL_CHECKUP -> generateRandomAppointmentDate(10, 30);
-            case GROOMING -> generateRandomAppointmentDate(7, 14);
-            case VACCINATION -> generateRandomAppointmentDate(30, 60);
-            case VETERINARY_CONSULTATION -> generateRandomAppointmentDate(14, 30);
-            case MEDICATION_ADMINISTRATION -> generateRandomAppointmentDate(1, 5);
-            default -> generateRandomAppointmentDate(1, 30);
-        };
-    }
+    List<AppointmentSchedulingModel> getAppointmentsByPetId(UUID petId);
+    AppointmentSchedulingModel updateAppointment(UUID id, AppointmentSchedulingDTO request);
+    void deleteAppointment(UUID id);
 
-    // Cria um agendamento automático para o pet baseado no tipo de serviço e uma data aleatória calculada
-    public AppointmentSchedulingModel createAutomaticAppointment(PetModel pet, ServiceType serviceType, String notes) {
-        LocalDate appointmentDate = calculateRandomDateForService(serviceType);
-
-        return new AppointmentSchedulingModel(
-                null,
-                serviceType,
-                appointmentDate,
-                pet,
-                notes
-        );
-    }
-
-    // Gera os agendamentos automáticos para o pet com base na lógica fornecida
-    public void generatePetAppointments(PetModel pet) {
-        List<AppointmentSchedulingModel> appointments = new ArrayList<>();
-
-        boolean isFirstAppointment = !appointmentRepository.existsByPetModel_PetId(pet.getPetId());
-
-        // Lógica para vacinação com base na idade
-        if (pet.getAge() < 6) {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.INITIAL_VACCINATION, "Initial Vaccination"));
-        } else {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.VACCINATION, "Regular Vaccination"));
-        }
-
-        // Lógica para consultas veterinárias
-        if (pet.getAge() >= 6) {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.INITIAL_CHECKUP, "Initial Health Check-up"));
-        } else {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.VETERINARY_CONSULTATION, "Routine Veterinary Consultation"));
-        }
-
-        // Agendamento de banho grátis para o primeiro agendamento
-        if (isFirstAppointment) {
-            appointments.add(createAutomaticAppointment(pet, ServiceType.FIRST_FREE_BATH, "Free Bath"));
-        }
-
-        appointmentRepository.saveAll(appointments);
-
-        System.out.println("Agendamentos gerados para o pet: " + appointments);
-    }
 }
