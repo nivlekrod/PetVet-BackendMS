@@ -1,93 +1,221 @@
-# Desafio Microsservicos
+## Desafio de Microsserviços
 
+# Sistema de Cadastro e Agenda de Cuidados para Pets 🐾
 
+## 📝 Descrição do Desafio
 
-## Getting started
+Desenvolvimento de um sistema com quatro microsserviços que se comunicam via **RabbitMQ** e **Feign Client** para comunicação síncrona. O sistema é composto pelos seguintes microsserviços:
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+1. **Eureka Server**: Gerencia registro e descoberta de microsserviços
+2. **Gateway**:  Organiza o roteamento e o loadbalance.
+3. **Cadastro de Pets (Pet Register)**: Responsável pelo gerenciamento completo das entidades **Pets** (CRUD completo);
+4. **Agenda de Cuidados (Appointment Scheduling)**: Organiza vacinações, banhos e consultas veterinárias;
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+A integração entre os microsserviços garante um fluxo eficiente e dinâmico para o gerenciamento dos pets.
 
-## Add your files
+## 🏗️⚙️ Estrutura e Funcionalidades do Projeto
+### 🔹 Microsserviço 1 - Eureka Server
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+- **Funcionalidade**: Serviço de descoberta de microsserviços.
+- **Registro Dinâmico**: Permite que microsserviços se registrem automaticamente.
+- **Consulta de Serviços**: Facilita a descoberta e comunicação entre microsserviços.
+- **Alta Disponibilidade**: Mantém uma lista atualizada dos serviços ativos.
 
+### 🔹 Microsserviço 2 - API Gateway
+
+- **Funcionalidade**: Roteamento e gerenciamento de requisições.
+- **Balanceamento de Carga**: Distribui requisições entre instâncias dos microsserviços.
+- **Segurança**: Pode integrar autenticação e autorização.
+
+### 🔹 Microsserviço 3 - Cadastro de Pets (Pet Register)
+
+Este microsserviço é responsável pelo cadastro de informações dos pets. Ele recebe os seguintes atributos para criar um novo cadastro:
+
+#### Atributos de Cadastro:
+
+- **ID**: Gerado automaticamente pelo sistema.
+- **Nome**: Nome do pet.
+- **Espécie**: Tipo de animal (exemplo: GATO, CACHORRO).
+- **Raça**: Raça do pet.
+- **Idade**: Idade do pet em meses.
+- **Peso**: Peso do pet em kg.
+- **Cor**: Cor do pet.
+- **Descrição**: Descrição do comportamento ou características do pet.
+- **Tutor**: Nome do tutor responsável pelo pet.
+- **Email do Tutor**: Email de contato do tutor.
+- **Imagem de Referencia** : Imagem do pet é fornecida por uma API externa (TheCatAPI & TheDogAPI)
+
+Esse microsserviço permite o cadastro completo das informações de um pet, com a integração da API Externa TheCatAPI & TheDogAPI para imagens, se necessário pode ser realizado outra consulta para obter informações adicionas (não incluso).
+
+### 🔹 Microsserviço 4 - Agendamento de Cuidados (Appointment Scheduling)
+
+Este microsserviço é responsável pelo agendamento de cuidados para os pets. Ele recebe os seguintes atributos para criar um novo agendamento:
+
+### Atributos de Agendamento:
+
+- **ID**: Gerado automaticamente pelo sistema.
+- **Tipo_Servico**: Tipo de serviço a ser agendado (exemplo: VACINA, BANHO, TOSA, COMPORTAMENTAL).
+- **Data_Agendamento**: Data do agendamento do serviço.
+- **Dados do Pet**: Recebe/Fornece dados da entidade Pet, por meio de Relacionamento entre Entidades no Banco de Dados e da implementações do Feign Client para consumo de forma síncrona do Serviço Cadastro de Pets (Pet Register).
+    - **ID_PET**: Identificador único do pet que está sendo agendado.
+    - **Nome_Pet**: Nome do pet que está sendo agendado.
+    - **Especie**: Espécie do pet (exemplo: GATO, CACHORRO).
+    - **Raça**: Raça do pet.
+    - **Idade**: Idade do pet em meses.
+    - **Peso**: Peso do pet em kg.
+    - **Tutor**: Nome do tutor responsável pelo pet.
+    - **Tutor_Email**: Email de contato do tutor.
+- **Observaçoes**: Observações adicionais sobre o agendamento ou sobre o pet.
+
+Esse microsserviço permite o cadastro e o gerenciamento de agendamentos de cuidados, garantindo o controle de informações relacionadas aos pets e seus tutores.
+
+## 🔧 Tecnologias Utilizadas
+
+- **JDK21**
+- **Spring Boot**
+- **RabbitMQ** (mensageria entre microsserviços de forma assíncrona)
+- **MySQL**
+- **H2** (para testes durante o desenvolvimento)
+- **Swagger**
+- **Maven**
+- **Postman**
+- **Feign Client** (para comunicação com outros serviços de forma síncrona)
+
+## 📚 Documentação com Swagger
+
+A documentação da API pode ser acessada em duas portas diferentes:
+**Documentação do Microserviço de Cadastro de Pets (Pet Register):**
 ```
-cd existing_repo
-git remote add origin https://git.gft.com/knou/desafio-microsservicos.git
-git branch -M main
-git push -uf origin main
+http://localhost:8081/swagger-ui.html
+```
+**Documentação do Microserviço de Agendamento de Cuidados (Appointment Scheduling):**
+```
+http://localhost:8082/swagger-ui.html
 ```
 
-## Integrate with your tools
+## 📌 Endpoints Disponíveis
 
-- [ ] [Set up project integrations](https://git.gft.com/knou/desafio-microsservicos/-/settings/integrations)
+### 🔹 Microsserviço 1 - Cadastro de Pets (Pet Register)
 
-## Collaborate with your team
+- **POST** `/api/pets` - Cadastrar um pet
+- **GET** `/api/pets/{id}` - Buscar um pet pelo ID
+- **GET** `/api/pets` - Listar todos os pets
+- **PUT** `/api/pets/{id}` - Atualizar dados de um pet
+- **DELETE** `/api/pets/{id}` - Deletar um pet
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### Filtro da raça
 
-## Test and Deploy
+- **GET** `/api/pets/filter?breed={raça}` - Buscar Pets cadastrados com base na raça.
+- **GET** `/api/pets/filter?species={ESPECIE}` - Buscar Pets cadastrados com base na especie.
 
-Use the built-in continuous integration in GitLab.
+- ⚠️ **ESSA FUNCIONALIDADE PODE SER REALIZADA DE FORMA CONJUNTA** 
+    - EXEMPLO: `/api/pets/filter?species={ESPECIE}?breed={raça}`
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### 🔹 Integração com TheDogAPI e TheCatApi
 
-***
+- **GET** `/api/cadastramento/images?breed={breed_id}` - Buscar imagens com base na raça
 
-# Editing this README
+## ❌ Tratamento de Erros
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- **404** - Recurso não encontrado
+- **400** - Erro de Requisição
+- **500** - Erro Interno no Servidor
+- **503** - API externa indisponível
 
-## Suggestions for a good README
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 🔹 Microsserviço 2 - Agendamento de Cuidados (Appointment Scheduling)
 
-## Name
-Choose a self-explaining name for your project.
+- **POST** `/api/appointments` - Criar um agendamentos na agenda
+- **GET** `/api/appointments?petId={ID_PET}` - Buscar um agendamento de um Pet em específico
+- **GET** `/api/appointments/all` - Listar todos agendamentos
+- **PUT** `/api/appointments/{id}` - Atualizar um agendamento
+- **DELETE** `/api/appointments/{id}` - Excluir um agendamento
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## 📋 Configuração
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### 🔹 Configurando o Microsserviço de Cadastro de Pets (Pet Register)
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Para configurar o microsserviço de cadastro de pets, é necessário ajustar o arquivo `application.properties` com as informações do banco de dados e da API externa para obtenção de imagens. Caso tenha criado uma fila com nome diferente, será necessário muda o `mq.queues`. Substitua os valores conforme suas credenciais:
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```application.properties
+# Nome da Aplicação
+spring.application.name={nome-da-aplicacao}
+server.port=8081
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+# Configuração do Banco de Dados
+spring.datasource.url=jdbc:mysql://localhost:3306/{nome-do-banco}?useSSL=false&createDatabaseIfNotExist=true
+spring.datasource.username={usuario-do-banco}
+spring.datasource.password={senha-do-banco}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+# Configuração do Swagger (OpenAPI)
+springdoc.api-docs.enabled=true
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+# Configuração do RabbitMQ
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username={usuario-rabbitmq}
+spring.rabbitmq.password={senha-rabbitmq}
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+# Nome da fila do RabbitMQ
+mq.queues.pet_created={nome-da-fila}
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+# Chave da API Externa (TheDogAPI/TheCatAPI)
+apikey={chave-api}
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+> ⚠️ **Importante**: Substitua `{Chave-Api}` pela chave obtida na [The Dog API](https://thedogapi.com/) ou [The Cat API](https://thecatapi.com/). Utilize credenciais seguras para o banco de dados e evite expor informações sensíveis diretamente no código.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
 
-## License
-For open source projects, say how it is licensed.
+### 🔹 Configurando o Microsserviço de Agendamento de Cuidados (Appointment Scheduling)
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Para configurar o microsserviço de agendamento de cuidado, é necessário ajustar o arquivo `application.properties` com as informações do banco de dados e de filas. Caso tenha criado uma fila com nome diferente, será necessário mudar o `mq.queues`. Substitua os valores conforme suas credenciais e configurações locais:
+
+```application.properties
+# Nome da Aplicação e Porta do Servidor
+spring.application.name={nome-da-aplicacao}
+server.port=8082
+
+# Configuração do Swagger (OpenAPI)
+springdoc.api-docs.enabled=true
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
+
+# Configuração do Eureka Server
+# URL do Eureka para registro do serviço
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+# Geração automática de UUID para o ID da instância do serviço
+spring.application.instance_id=${random.uuid}
+# Formato do ID da instância no Eureka
+eureka.client.instance.instance-id=${spring.application.name}:${spring.application.instance_id}
+
+# Configuração do Banco de Dados MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/{nome-do-banco}?useSSL=false&createDatabaseIfNotExist=true
+spring.datasource.username={usuario-do-banco}
+spring.datasource.password={senha-do-banco}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.hibernate.ddl_auto=update
+
+# Configuração do RabbitMQ
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username={usuario-rabbitmq}
+spring.rabbitmq.password={senha-rabbitmq}
+
+# Nome da fila do RabbitMQ
+mq.queues.pet_created={nome-da-fila}
+```
+
+
+Feito por Kelvin R. para GFT Start
+
+
